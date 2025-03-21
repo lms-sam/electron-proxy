@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>网络请求监控工具</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .controls {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    
+    .controls button {
+      padding: 8px 16px;
+      margin-right: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    .start-btn {
+      background-color: #4CAF50;
+      color: white;
+    }
+    
+    .stop-btn {
+      background-color: #f44336;
+      color: white;
+    }
+    
+    .export-btn {
+      background-color: #2196F3;
+      color: white;
+    }
+    
+    .clear-btn {
+      background-color: #FF9800;
+      color: white;
+    }
+    
+    .status {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    
+    .requests-container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .request-list {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    
+    .request-item {
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    
+    .request-item:hover {
+      background-color: #f5f5f5;
+    }
+    
+    .request-item.expanded {
+      background-color: #f8f9fa;
+    }
+    
+    .timestamp {
+      color: #666;
+      font-size: 12px;
+    }
+    
+    .method {
+      font-weight: bold;
+      margin-right: 10px;
+    }
+    
+    .method.GET { color: #4CAF50; }
+    .method.POST { color: #2196F3; }
+    .method.PUT { color: #FF9800; }
+    .method.DELETE { color: #f44336; }
+    
+    .protocol {
+      background-color: #e91e63;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      margin-right: 10px;
+    }
+    
+    .url {
+      color: #2196F3;
+      word-break: break-all;
+    }
+    
+    .details {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+    }
+    
+    .details.visible {
+      display: block;
+    }
+    
+    .details pre {
+      margin: 5px 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    
+    .status-code {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+    
+    .status-code.success { background-color: #4CAF50; color: white; }
+    .status-code.redirect { background-color: #FF9800; color: white; }
+    .status-code.client-error { background-color: #f44336; color: white; }
+    .status-code.server-error { background-color: #9C27B0; color: white; }
+    
+    .input-group {
+      margin-bottom: 10px;
+    }
+    
+    .input-group label {
+      display: inline-block;
+      width: 100px;
+      font-size: 14px;
+    }
+    
+    .input-group input, .input-group select {
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      width: 150px;
+    }
+
+    .filters-section {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+    }
+
+    .certificate-section {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+    }
+
+    .certificate-status {
+      margin: 10px 0;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .certificate-status.installed {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .certificate-status.not-installed {
+      background-color: #ffebee;
+      color: #c62828;
+    }
+
+    .certificate-buttons button {
+      margin-right: 10px;
+    }
+
+    .cert-btn {
+      background-color: #673ab7;
+      color: white;
+    }
+
+    .tab-header {
+      margin-bottom: 10px;
+    }
+
+    .tab-header button {
+      background: none;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 10px;
+    }
+
+    .tab-header button.active {
+      border-bottom: 2px solid #2196F3;
+      color: #2196F3;
+    }
+
+    .tab-content {
+      padding: 10px;
+      border: 1px solid #eee;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+    
+    .request-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .no-requests {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="controls">
+      <div class="input-group">
+        <label for="port">代理端口 (HTTP/HTTPS):</label>
+        <input type="number" id="port" value="8888" min="1024" max="65535">
+      </div>
+      <button class="start-btn" onclick="startProxy()">启动代理</button>
+      <button class="stop-btn" onclick="stopProxy()">停止代理</button>
+      <button class="export-btn" onclick="exportData()">导出数据</button>
+      <div class="status" id="status">状态: 已停止</div>
+
+      <div class="filters-section">
+        <h3>请求过滤</h3>
+        <div class="input-group">
+          <label for="urlFilter">URL包含:</label>
+          <input type="text" id="urlFilter" placeholder="例如: api.example.com">
+        </div>
+        <div class="input-group">
+          <label for="methodFilter">请求方法:</label>
+          <select id="methodFilter">
+            <option value="">全部</option>
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="DELETE">DELETE</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="contentTypeFilter">内容类型:</label>
+          <input type="text" id="contentTypeFilter" placeholder="例如: application/json">
+        </div>
+        <button onclick="updateFilters()" class="start-btn">应用过滤器</button>
+      </div>
+
+      <div class="certificate-section">
+        <h3>HTTPS证书管理</h3>
+        <div id="certificateStatus" class="certificate-status not-installed">
+          证书状态检查中...
+        </div>
+        <div class="certificate-buttons">
+          <button class="cert-btn" onclick="installCertificate()">安装证书</button>
+          <button class="cert-btn" onclick="exportCertificate()">导出证书</button>
+          <button class="cert-btn" onclick="checkCertificate()">检查证书状态</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="requests-container">
+      <div class="request-actions">
+        <h2>已捕获的请求</h2>
+        <button class="clear-btn" onclick="clearRequests()">清空记录</button>
+      </div>
+      <div class="request-list" id="requestList">
+        <div class="no-requests" id="noRequestsMessage">暂无请求记录</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    let capturedRequests = [];
+    
+    function startProxy() {
+      const port = document.getElementById('port').value;
+      if (!port || port < 1024 || port > 65535) {
+        alert('请输入有效的端口号（1024-65535）');
+        return;
+      }
+      
+      // 获取当前过滤器设置
+      const filters = getFilters();
+      
+      console.log('发送启动代理请求，端口:', port);
+      document.getElementById('status').textContent = '状态: 正在启动...';
+      ipcRenderer.send('start-proxy', { 
+        port: parseInt(port),
+        filters: filters
+      });
+      
+      // 延迟1秒检查证书状态
+      setTimeout(checkCertificate, 1000);
+    }
+    
+    function stopProxy() {
+      ipcRenderer.send('stop-proxy');
+    }
+    
+    function exportData() {
+      if (capturedRequests.length === 0) {
+        alert('没有可导出的数据');
+        return;
+      }
+      ipcRenderer.send('export-data', capturedRequests);
+    }
+    
+    function clearRequests() {
+      if (capturedRequests.length === 0) {
+        return;
+      }
+      
+      if (confirm('确定要清空所有请求记录吗？')) {
+        capturedRequests = [];
+        const requestList = document.getElementById('requestList');
+        requestList.innerHTML = '<div class="no-requests" id="noRequestsMessage">暂无请求记录</div>';
+      }
+    }
+
+    function getFilters() {
+      return {
+        url: document.getElementById('urlFilter').value || null,
+        method: document.getElementById('methodFilter').value || null,
+        contentType: document.getElementById('contentTypeFilter').value || null
+      };
+    }
+
+    function updateFilters() {
+      const filters = getFilters();
+      ipcRenderer.send('update-filters', filters);
+    }
+    
+    function getStatusCodeClass(statusCode) {
+      if (statusCode >= 200 && statusCode < 300) return 'success';
+      if (statusCode >= 300 && statusCode < 400) return 'redirect';
+      if (statusCode >= 400 && statusCode < 500) return 'client-error';
+      if (statusCode >= 500) return 'server-error';
+      return '';
+    }
+
+    function formatHeaders(headers) {
+      if (!headers) return '';
+      return Object.entries(headers)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join('\n');
+    }
+
+    function formatBody(body) {
+      if (!body) return '';
+      try {
+        // 尝试格式化 JSON
+        const obj = typeof body === 'string' ? JSON.parse(body) : body;
+        return JSON.stringify(obj, null, 2);
+      } catch {
+        // 如果不是 JSON，直接返回原始内容
+        return body;
+      }
+    }
+    
+    function addRequestToList(data) {
+      // 移除"暂无请求记录"提示
+      const noRequestsMessage = document.getElementById('noRequestsMessage');
+      if (noRequestsMessage) {
+        noRequestsMessage.remove();
+      }
+      
+      capturedRequests.push(data);
+      const requestList = document.getElementById('requestList');
+      
+      const requestElement = document.createElement('div');
+      requestElement.className = 'request-item';
+      
+      const { request, response } = data;
+      const statusCodeClass = getStatusCodeClass(response.statusCode);
+      
+      requestElement.innerHTML = `
+        <div class="request-header" onclick="toggleDetails(this.parentElement)">
+          <span class="timestamp">${new Date(request.timestamp).toLocaleTimeString()}</span>
+          <span class="protocol">${request.protocol}</span>
+          <span class="method ${request.method}">${request.method}</span>
+          <span class="url">${request.url}</span>
+          <span class="status-code ${statusCodeClass}">${response.statusCode}</span>
+        </div>
+        <div class="details">
+          <div class="tab-header">
+            <button class="active" onclick="switchTab(this, 'request')">请求</button>
+            <button onclick="switchTab(this, 'response')">响应</button>
+          </div>
+          <div class="tab-content request-tab">
+            <h4>请求头</h4>
+            <pre>${formatHeaders(request.headers)}</pre>
+            ${request.body ? `
+              <h4>请求体</h4>
+              <pre>${formatBody(request.body)}</pre>
+            ` : ''}
+          </div>
+          <div class="tab-content response-tab" style="display: none;">
+            <h4>响应头</h4>
+            <pre>${formatHeaders(response.headers)}</pre>
+            ${response.body ? `
+              <h4>响应体</h4>
+              <pre>${formatBody(response.body)}</pre>
+            ` : ''}
+          </div>
+        </div>
+      `;
+      
+      requestList.insertBefore(requestElement, requestList.firstChild);
+    }
+    
+    function toggleDetails(element) {
+      const details = element.querySelector('.details');
+      details.classList.toggle('visible');
+      element.classList.toggle('expanded');
+    }
+
+    function switchTab(button, tab) {
+      // 更新按钮状态
+      const tabHeader = button.parentElement;
+      tabHeader.querySelectorAll('button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      button.classList.add('active');
+
+      // 更新内容显示
+      const details = button.closest('.details');
+      details.querySelectorAll('.tab-content').forEach(content => {
+        content.style.display = 'none';
+      });
+      details.querySelector(`.${tab}-tab`).style.display = 'block';
+    }
+    
+    // 监听请求完成事件
+    ipcRenderer.on('request-completed', (event, data) => {
+      addRequestToList(data);
+    });
+    
+    ipcRenderer.on('proxy-status', (event, data) => {
+      console.log('收到代理状态更新:', data);
+      const statusElement = document.getElementById('status');
+      if (data.running) {
+        statusElement.textContent = `状态: 运行中 (HTTP/HTTPS 端口: ${data.port})`;
+        statusElement.className = 'status running';
+      } else {
+        statusElement.textContent = '状态: 已停止';
+        statusElement.className = 'status stopped';
+      }
+    });
+
+    ipcRenderer.on('proxy-error', (event, error) => {
+      alert('代理服务器错误: ' + error.message);
+      const statusElement = document.getElementById('status');
+      statusElement.textContent = '状态: 错误';
+      statusElement.className = 'status stopped';
+    });
+
+    ipcRenderer.on('export-complete', (event, result) => {
+      if (result.success) {
+        alert('数据导出成功!');
+      } else {
+        alert('导出失败: ' + result.error);
+      }
+    });
+
+    ipcRenderer.on('filters-updated', (event, result) => {
+      if (result.success) {
+        alert('过滤规则已更新');
+      } else {
+        alert('更新过滤规则失败: ' + result.message);
+      }
+    });
+
+    // 证书管理相关函数
+    function updateCertificateStatus(status) {
+      const statusElement = document.getElementById('certificateStatus');
+      statusElement.textContent = status.message;
+      statusElement.className = `certificate-status ${status.installed ? 'installed' : 'not-installed'}`;
+    }
+
+    function checkCertificate() {
+      ipcRenderer.send('check-certificate');
+    }
+
+    function installCertificate() {
+      ipcRenderer.send('install-certificate');
+    }
+
+    function exportCertificate() {
+      ipcRenderer.send('export-certificate');
+    }
+
+    // 证书相关的IPC监听器
+    ipcRenderer.on('certificate-status', (event, status) => {
+      updateCertificateStatus(status);
+    });
+
+    ipcRenderer.on('certificate-install-result', (event, result) => {
+      if (result.success) {
+        alert('证书安装成功！');
+        checkCertificate();
+      } else {
+        alert('证书安装失败: ' + result.message);
+      }
+    });
+
+    ipcRenderer.on('certificate-export-result', (event, result) => {
+      if (result.success) {
+        alert('证书已成功导出到: ' + result.path);
+      } else {
+        alert('证书导出失败: ' + result.message);
+      }
+    });
+
+    // 页面加载完成后检查证书状态
+    document.addEventListener('DOMContentLoaded', () => {
+      checkCertificate();
+    });
+  </script>
+</body>
+</html>

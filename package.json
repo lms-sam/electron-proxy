@@ -1,0 +1,26 @@
+{
+  "name": "electron-proxy-monitor",
+  "version": "1.0.0",
+  "description": "基于Electron的系统代理监控工具，支持监控所有HTTP/HTTPS请求",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "electron",
+    "proxy",
+    "https",
+    "monitor",
+    "network"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.1.0"
+  },
+  "dependencies": {
+    "http-proxy": "^1.18.1",
+    "node-forge": "^1.3.1"
+  }
+}
